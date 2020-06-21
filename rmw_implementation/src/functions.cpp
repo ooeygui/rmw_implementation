@@ -102,7 +102,20 @@ std::string find_library_path(const std::string & library_name)
 
   std::string filename = filename_prefix;
   filename += library_name + filename_extension;
+  
+  #ifdef _WIN32
+  // Support current directory to enable containerized deployments, like Hololens.
+  DWORD len = GetCurrentDirectoryA(0, NULL) + 1;  // How much space is needed for current path?
+  char* currentDir = new char[len];
+  if (currentDir) {
+    if (GetCurrentDirectoryA(len, currentDir) > 0) {
+      search_paths.push_front(currentDir);
+    }
 
+    delete [] currentDir; // no longer needed.
+  }
+  #endif
+  
   for (auto it : search_paths) {
     std::string path = it + "/" + filename;
     if (is_file_exist(path.c_str())) {
